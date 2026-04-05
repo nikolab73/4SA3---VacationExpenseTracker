@@ -42,7 +42,7 @@ def new_trip(connection, cursor):
     trip_name = input("Please name your trip, make sure to remember this: ")
     home_currency = input("Please enter your home currency (e.g., CAD): ").upper()
     trip_currency = input("Please enter the currency used on your trip (e.g., EUR): ").upper()
-    budget = input("Please enter your trip budget (in home currency): ")
+    budget = float(input("Please enter your trip budget (in home currency): "))
 
     # adding expense details
     print("\nThank you! Now let's get started on your first expense")
@@ -52,6 +52,8 @@ def new_trip(connection, cursor):
     # calculate converted amounts
     if home_currency != trip_currency:
         amount_converted = amount*1.10 # placeholder for conversion
+    else:
+        amount_converted = amount
 
     # append 1st entry to db
     cursor.execute("""INSERT INTO expenses
@@ -63,13 +65,13 @@ def new_trip(connection, cursor):
 
 
 
-def find_existing_trips(connection, cursor):
+def find_existing_trips(cursor):
     """Find and return existing trip"""
 
     # ask for trip name
     name = input("\nLet's find your trip, please enter the name: ")
 
-    cursor.execute("SELECT * FROM expenses WHERE trip_name = %s", (name))
+    cursor.execute("SELECT * FROM expenses WHERE trip_name = %s", (name,))
     results = cursor.fetchall() # get all rows (full vacation log)
 
     if results:
@@ -93,29 +95,29 @@ def edit_trip_expenses(trips, connection, cursor):
     selection = input("Enter choice (1, 2, 3, 4): ")
 
     if selection == '1':
-        add_expense()
+        add_expense(trips, connection, cursor)
     elif selection == '2':
-        edit_expense()
+        edit_expense(trips, connection, cursor)
     elif selection == '3':
-        delete_expense()
+        delete_expense(trips, connection, cursor)
     elif selection == '4':
-        generate_report()
+        generate_report(trips, connection, cursor)
     else:
         print("invalid entry")
 
 
 
 
-def add_expense():
+def add_expense(trips, connection, cursor):
     """Add expense to trip"""
 
-def edit_expense():
+def edit_expense(trips, connection, cursor):
     """Edit existing entry in table"""
 
-def delete_expense():
+def delete_expense(trips, connection, cursor):
     """Remove entry from table"""
 
-def generate_report():
+def generate_report(trips, connection, cursor):
     """Generate vacation expense and budget report"""
 
 
@@ -133,11 +135,13 @@ def main():
             new_trip(DBconnection, cursor)
 
         elif choice == '2':
-            trips = find_existing_trips(DBconnection, cursor)
+            trips = find_existing_trips(cursor)
             edit_trip_expenses(trips, DBconnection, cursor)
         elif choice == '3':
             print("Exiting program, thank you")
             break
+        else:
+            print("Invalid entry")
 
 
 
