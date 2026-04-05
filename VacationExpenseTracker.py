@@ -58,6 +58,7 @@ def new_trip(connection, cursor, exchange_proxy):
                    """, (trip_name, home_currency, trip_currency, budget, amount, amount_converted, category, date.today()))
     connection.commit()
     print(f"Trip: {trip_name} created, with first expense recorded")
+    
 
 
 
@@ -133,6 +134,7 @@ def add_expense(trips, connection, cursor, exchange_proxy):
     
     connection.commit()
     print(f"Added {new_expense['category']} expense to {trip_name}")
+    budget_alerts(trips, amount_converted, home_currency)
 
 
 def expense_factory(category, amount, trip_currency):
@@ -199,11 +201,12 @@ def edit_expense(trips, connection, cursor, exchange_proxy):
 
     cursor.execute("""UPDATE expenses 
                    SET amount = %s, amount_converted = %s, category = %s 
-WHERE expense_id = %s
+                WHERE expense_id = %s
                    """, (amount, amount_converted, category, choice))
     connection.commit()
 
     print(f"\nUpdated expense ID: {choice}")
+    budget_alerts(trips, amount_converted, home_currency)
 
     
 
@@ -233,6 +236,39 @@ def delete_expense(trips, connection, cursor):
 
 def generate_report(trips):
     """Generate vacation expense and budget report"""
+
+    trip_name = trips[0][7]
+    budget = trips[0][8]
+    home_currency = [0][5]
+    trip_currency = [0][6]
+    
+    # add total spent on food, stay, transport, event, other
+    food_cost = 0
+    stay_cost = 0
+    transport_cost = 0
+    event_cost = 0
+    other_cost = 0
+    total_spent = 0
+
+    for i, expenses in enumerate(trips): # iterate through trips to find total spent and cost per category
+        total_spent += float(expenses[4])
+
+        if expenses[1] == "food": # add food costs
+            food_cost += float(expenses[4])
+
+        elif expenses[1] == "stay": # add stay costs
+            stay_cost += float(expenses[4])
+
+        elif expenses[1] == "transport": # add transport costs
+            transport_cost += float(expenses[4])
+
+        elif expenses[1] == "event": # add event costs
+            event_cost += float(expenses[4])
+
+        else: # add other costs
+            other_cost += float(expenses[4])
+    
+    print(f"\n-------------- Trip Report -------------- \nShowing details for {trip_name}")
 
 
 
@@ -276,18 +312,31 @@ class currency_conversion:
     
 
 
-def budget_alerts(cursor, trips):
-    """Print budget alerts to user based on budget use - follows strategy pattern"""
+def budget_alerts(trips, expense, home_currency):
+    """Print budget alerts to user based on budget use - partially follows strategy pattern"""
 
     budget = trips[0][8]
     target_80 = budget*0.8
     large_spend = budget*0.15
     total_spent = 0
 
-    for i, expense in enumerate(trips):
-        total_spent += float(expense[4])
+    for i, expenses in enumerate(trips): # iterate through trips to find total spent
+        total_spent += float(expenses[4]) 
 
     remaining = budget-total_spent
+
+    if remaining < 0:
+        print(f"ALERT!: Budget of {budget}{home_currency} exceeded")
+        remaining = 0
+
+    if float(expense) >= large_spend:
+        print(f"ALERT!: Your expense of {expense}{home_currency} exceeds 15% of your total budget")
+
+    if total_spent > target_80:
+        print(f"ALERT!: You have exceeded 80% of your budget. Total spend = {total_spent}{home_currency}")
+
+    if remaining <= 100:
+        print(f"ALERT!: You have less than 100{home_currency} remaining. Amount remaining = {remaining}")
 
 
 
