@@ -144,6 +144,26 @@ def edit_expense(trips, connection, cursor):
 def delete_expense(trips, connection, cursor):
     """Remove entry from table"""
 
+    trip_name = trips[0][7]
+    
+    print(f"\nShowing expenses for {trip_name}" + "-"*55)
+    for i, expense in enumerate(trips):
+        expense_id = expense[0]
+        category = expense[1]
+        date = expense[2]
+        amount = expense[3]
+        trip_currency = expense[7]
+        print(f"ID: {expense_id}, Category: {category}, Amount: {amount}{trip_currency}, Dated: {date}")
+    
+    choice = input("Enter ID # of expense you would like to delete")
+
+    cursor.execute("DELETE FROM expenses WHERE expense_id = %s", (expense_id))
+    connection.commit()
+    print(f"Expense removed from {trip_name}")
+
+
+
+
 def generate_report(trips):
     """Generate vacation expense and budget report"""
 
