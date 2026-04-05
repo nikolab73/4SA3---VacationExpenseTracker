@@ -20,6 +20,8 @@ def connect_db():
     )
     return connection
 
+
+
 def main_menu():
     """Display main menu & get users choice on actions"""
 
@@ -29,6 +31,8 @@ def main_menu():
           3. Exit""")
     selection = input("Enter choice (1, 2, 3): ")
     return selection
+
+
 
 def new_trip(connection, cursor):
     """Creating a new trip"""
@@ -57,6 +61,8 @@ def new_trip(connection, cursor):
     connection.commit()
     print(f"Trip: {trip_name} created, with first expense recorded")
 
+
+
 def find_existing_trips(connection, cursor):
     """Find and return existing trip"""
 
@@ -72,6 +78,46 @@ def find_existing_trips(connection, cursor):
     else:
         print(f"Could not find trip {name}")
         return None
+    
+
+
+def edit_trip_expenses(trips, connection, cursor):
+    """Here the user can create, edit, delete expenses or generate report"""
+
+    # list trip managemnet options
+    print("""\nPlease select what you would like to do for this trip
+          1. Create new expense
+          2. Edit expense
+          3. Remove expense
+          4. Generate vacation report""")
+    selection = input("Enter choice (1, 2, 3, 4): ")
+
+    if selection == '1':
+        add_expense()
+    elif selection == '2':
+        edit_expense()
+    elif selection == '3':
+        delete_expense()
+    elif selection == '4':
+        generate_report()
+    else:
+        print("invalid entry")
+
+
+
+
+def add_expense():
+    """Add expense to trip"""
+
+def edit_expense():
+    """Edit existing entry in table"""
+
+def delete_expense():
+    """Remove entry from table"""
+
+def generate_report():
+    """Generate vacation expense and budget report"""
+
 
 def main():
     """Main program loop"""
@@ -88,6 +134,12 @@ def main():
 
         elif choice == '2':
             trips = find_existing_trips(DBconnection, cursor)
+            edit_trip_expenses(trips, DBconnection, cursor)
+        elif choice == '3':
+            print("Exiting program, thank you")
+            break
+
+
 
 if __name__ == "__main__":
     main()
