@@ -42,7 +42,7 @@ def new_trip(connection, cursor):
 
     # adding expense details
     print("\nThank you! Now let's get started on your first expense")
-    amount = float(input(f"Enter expense amount (in ${trip_currency}): " ))
+    amount = float(input(f"Enter expense amount (in {trip_currency}): " ))
     category = input("Enter category for spending (food, stay, transport, event): ")
 
     # calculate converted amounts
@@ -54,15 +54,40 @@ def new_trip(connection, cursor):
                    (trip_name, home_currency, trip_currency, trip_budget, amount, amount_converted, category, expense_date)
                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                    """, (trip_name, home_currency, trip_currency, budget, amount, amount_converted, category, date.today()))
+    connection.commit()
+    print(f"Trip: {trip_name} created, with first expense recorded")
 
+def find_existing_trips(connection, cursor):
+    """Find and return existing trip"""
+
+    # ask for trip name
+    name = input("\nLet's find your trip, please enter the name: ")
+
+    cursor.execute("SELECT * FROM expenses WHERE trip_name = %s", (name))
+    results = cursor.fetchall() # get all rows (full vacation log)
+
+    if results:
+        print(f"Found trip {name}")
+        return results
+    else:
+        print(f"Could not find trip {name}")
+        return None
 
 def main():
     """Main program loop"""
 
     DBconnection = connect_db()
-    cursor = DBconnection.cursor
+    cursor = DBconnection.cursor()
 
-    new_trip(DBconnection, cursor)
+    while True:
+
+        choice = main_menu()
+
+        if choice == '1':
+            new_trip(DBconnection, cursor)
+
+        elif choice == '2':
+            trips = find_existing_trips(DBconnection, cursor)
 
 if __name__ == "__main__":
     main()
