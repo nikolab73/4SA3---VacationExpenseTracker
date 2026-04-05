@@ -47,7 +47,7 @@ def new_trip(connection, cursor):
     # adding expense details
     print("\nThank you! Now let's get started on your first expense")
     amount = float(input(f"Enter expense amount (in {trip_currency}): " ))
-    category = input("Enter category for spending (food, stay, transport, event): ")
+    category = input("Enter category for spending (food, stay, transport, event, other): ")
 
     # calculate converted amounts
     if home_currency != trip_currency:
@@ -101,7 +101,7 @@ def edit_trip_expenses(trips, connection, cursor):
     elif selection == '3':
         delete_expense(trips, connection, cursor)
     elif selection == '4':
-        generate_report(trips, connection, cursor)
+        generate_report(trips)
     else:
         print("invalid entry")
 
@@ -111,13 +111,40 @@ def edit_trip_expenses(trips, connection, cursor):
 def add_expense(trips, connection, cursor):
     """Add expense to trip"""
 
+    # get trip info
+    trip_name = trips[0][7]
+    home_currency = trips[0][5]
+    trip_currency = trips[0][6]
+    budget = trips[0][8]
+
+    # get expense details
+    print("\nLet's add an expense")
+    amount = float(input(f"Enter expense amount (in {trip_currency}): " ))
+    category = input("Enter category for spending (food, stay, transport, event, other): ")
+
+    # calculate converted amounts
+    if home_currency != trip_currency:
+        amount_converted = amount*1.10 # placeholder for conversion
+    else:
+        amount_converted = amount
+
+    cursor.execute("""INSERT INTO expenses
+                   (trip_name, home_currency, trip_currency, trip_budget, amount, amount_converted, category, expense_date)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                   """, (trip_name, home_currency, trip_currency, budget, amount, amount_converted, category, date.today()))
+    connection.commit()
+    print(f"Added {category} expense to {trip_name}")
+
+
+
+
 def edit_expense(trips, connection, cursor):
     """Edit existing entry in table"""
 
 def delete_expense(trips, connection, cursor):
     """Remove entry from table"""
 
-def generate_report(trips, connection, cursor):
+def generate_report(trips):
     """Generate vacation expense and budget report"""
 
 
