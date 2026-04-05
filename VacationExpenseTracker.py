@@ -4,11 +4,6 @@ import requests
 import psycopg2
 from datetime import date
 
-# API initialization
-url = "https://api.exchangerate-api.com/v4/latest/USD"
-response = requests.get(url)
-data = response.json()
-
 # DB connection initialization
 def connect_db():
     connection = psycopg2.connect(
@@ -144,6 +139,41 @@ def add_expense(trips, connection, cursor):
 
 
 
+def expense_factory(category, amount, trip_currency):
+    """Expense factory function: creates different types of expenses based on category"""
+    
+    if category == "food":
+        return {
+            "category": "food",
+            "amount": amount,
+            "currency": trip_currency,
+        }
+    elif category == "stay":
+        return {
+            "category": "stay",
+            "amount": amount,
+            "currency": trip_currency,
+        }
+    elif category == "transport":
+        return {
+            "category": "transport",
+            "amount": amount,
+            "currency": trip_currency,
+        }
+    elif category == "event":
+        return {
+            "category": "event",
+            "amount": amount,
+            "currency": trip_currency,
+        }
+    else:
+        return {
+            "category": "other",
+            "amount": amount,
+            "currency": trip_currency,
+        }
+
+
 def edit_expense(trips, connection, cursor):
     """Edit existing entry in table"""
 
@@ -208,42 +238,34 @@ def generate_report(trips):
 
 
 
+class currency_conversion:
+    """Used to convert currencies and store previous conversions using proxy pattern"""
 
-def expense_factory(category, amount, trip_currency):
-    """Expense factory function: creates different types of expenses based on category"""
-    
-    if category == "food":
-        return {
-            "category": "food",
-            "amount": amount,
-            "currency": trip_currency,
-        }
-    elif category == "stay":
-        return {
-            "category": "stay",
-            "amount": amount,
-            "currency": trip_currency,
-        }
-    elif category == "transport":
-        return {
-            "category": "transport",
-            "amount": amount,
-            "currency": trip_currency,
-        }
-    elif category == "event":
-        return {
-            "category": "event",
-            "amount": amount,
-            "currency": trip_currency,
-        }
-    else:
-        return {
-            "category": "other",
-            "amount": amount,
-            "currency": trip_currency,
-        }
-    
+    def __init__(self):
+        self.cache = {}
 
+    def get_rate(self, trip_currency, home_currency):
+        cache_key = f"{trip_currency}_{home_currency}"
+
+        # check if cached key exists
+        if cache_key in self.cache:
+            return self.cache[cache_key]
+        
+        try:
+            # API initialization
+            url = "https://api.exchangerate-api.com/v4/latest/USD"
+            response = requests.get(url)
+            data = response.json()
+
+            # if home currency is USD - exchange rates API only allows USD conversion for free so we will account for this
+
+            # if trip currency is USD
+
+            # if neither are USD
+
+        except:
+            print("Error fetching rate")
+    
 
 
 def main():
