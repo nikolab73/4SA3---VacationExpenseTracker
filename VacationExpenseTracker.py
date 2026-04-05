@@ -19,8 +19,8 @@ def connect_db():
     )
     return connection
 
-
-print("Welcome to the Vacation Expense Tracker \nWould you like to create a new trip or go to existing trip?")
+def main_menu():
+    print("Welcome to the Vacation Expense Tracker \nWould you like to create a new trip or go to existing trip?\n"+"="*55)
 
 
 def main():
