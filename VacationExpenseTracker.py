@@ -29,7 +29,7 @@ def main_menu():
 
 
 
-def new_trip(connection, cursor):
+def new_trip(connection, cursor, exchange_proxy):
     """Creating a new trip"""
 
     #adding trip details
@@ -46,7 +46,8 @@ def new_trip(connection, cursor):
 
     # calculate converted amounts
     if home_currency != trip_currency:
-        amount_converted = amount*1.10 # placeholder for conversion
+        rate = exchange_proxy.get_rate(trip_currency, home_currency)
+        amount_converted = amount*rate
     else:
         amount_converted = amount
 
@@ -79,7 +80,7 @@ def find_existing_trips(cursor):
 
 
 
-def edit_trip_expenses(trips, connection, cursor):
+def edit_trip_expenses(trips, connection, cursor, exchange_proxy):
     """Here the user can create, edit, delete expenses or generate report"""
 
     # list trip managemnet options
@@ -91,9 +92,9 @@ def edit_trip_expenses(trips, connection, cursor):
     selection = input("Enter choice (1, 2, 3, 4): ")
 
     if selection == '1':
-        add_expense(trips, connection, cursor)
+        add_expense(trips, connection, cursor, exchange_proxy)
     elif selection == '2':
-        edit_expense(trips, connection, cursor)
+        edit_expense(trips, connection, cursor, exchange_proxy)
     elif selection == '3':
         delete_expense(trips, connection, cursor)
     elif selection == '4':
@@ -104,7 +105,7 @@ def edit_trip_expenses(trips, connection, cursor):
 
 
 
-def add_expense(trips, connection, cursor):
+def add_expense(trips, connection, cursor, exchange_proxy):
     """Add expense to trip"""
 
     # get trip info
@@ -122,7 +123,8 @@ def add_expense(trips, connection, cursor):
 
     # calculate converted amounts
     if home_currency != trip_currency:
-        amount_converted = new_expense['amount']*1.10 # placeholder for conversion
+        rate = exchange_proxy.get_rate(trip_currency, home_currency)
+        amount_converted = new_expense['amount']*rate
     else:
         amount_converted = new_expense['amount']
 
@@ -136,8 +138,6 @@ def add_expense(trips, connection, cursor):
     
     connection.commit()
     print(f"Added {new_expense['category']} expense to {trip_name}")
-
-
 
 def expense_factory(category, amount, trip_currency):
     """Expense factory function: creates different types of expenses based on category"""
@@ -174,7 +174,8 @@ def expense_factory(category, amount, trip_currency):
         }
 
 
-def edit_expense(trips, connection, cursor):
+
+def edit_expense(trips, connection, cursor, exchange_proxy):
     """Edit existing entry in table"""
 
     trip_name = trips[0][7]
@@ -195,7 +196,8 @@ def edit_expense(trips, connection, cursor):
 
     # calculate converted amounts
     if home_currency != trip_currency:
-        amount_converted = amount*1.10 # placeholder for conversion
+        rate = exchange_proxy.get_rate(trip_currency, home_currency)
+        amount_converted = amount*rate
     else:
         amount_converted = amount
 
@@ -226,7 +228,7 @@ def delete_expense(trips, connection, cursor):
     
     choice = int(input("Enter ID # of expense you would like to delete"))
 
-    cursor.execute("DELETE FROM expenses WHERE expense_id = %s", (expense_id))
+    cursor.execute("DELETE FROM expenses WHERE expense_id = %s", (choice,))
     connection.commit()
     print(f"Expense removed from {trip_name}")
 
@@ -248,8 +250,8 @@ class currency_conversion:
         cache_key = f"{trip_currency} to {home_currency}" # initialize cache key, conversion from trip (amount entered) to home (converted value also saved)
 
         # check if cached key exists
-        if cache_key in self.cache: # check if the string 
-            return self.cache[cache_key]
+        if cache_key in self.cache: # check if the string (conversion from, to) exists in the keys
+            return self.cache[cache_key] # return rate
         
         try:
             # API initialization
@@ -283,17 +285,18 @@ def main():
 
     DBconnection = connect_db()
     cursor = DBconnection.cursor()
+    exchange_proxy = currency_conversion()
 
     while True:
 
         choice = main_menu()
 
         if choice == '1':
-            new_trip(DBconnection, cursor)
+            new_trip(DBconnection, cursor, exchange_proxy)
 
         elif choice == '2':
             trips = find_existing_trips(cursor)
-            edit_trip_expenses(trips, DBconnection, cursor)
+            edit_trip_expenses(trips, DBconnection, cursor, exchange_proxy)
         elif choice == '3':
             print("Exiting program, thank you")
             break
