@@ -17,18 +17,6 @@ def connect_db():
 
 
 
-def main_menu():
-    """Display main menu & get users choice on actions"""
-
-    print("\nWelcome to the Vacation Expense Tracker\nPlease select which actions you would like to do" + "="*55)
-    print("""1. Create new trip
-          2. Work on existing trip
-          3. Exit""")
-    selection = input("Enter choice (1, 2, 3): ")
-    return selection
-
-
-
 def new_trip(connection, cursor, exchange_proxy):
     """Creating a new trip"""
 
@@ -58,6 +46,9 @@ def new_trip(connection, cursor, exchange_proxy):
                    """, (trip_name, home_currency, trip_currency, budget, amount, amount_converted, category, date.today()))
     connection.commit()
     print(f"Trip: {trip_name} created, with first expense recorded")
+
+    cursor.execute("SELECT * FROM expenses WHERE trip_name = %s", (trip_name,))
+    return cursor.fetchall()
     
 
 
@@ -84,11 +75,11 @@ def edit_trip_expenses(trips, connection, cursor, exchange_proxy):
     """Here the user can create, edit, delete expenses or generate report"""
 
     # list trip managemnet options
-    print("""\nPlease select what you would like to do for this trip
-          1. Create new expense
-          2. Edit expense
-          3. Remove expense
-          4. Generate vacation report""")
+    print("\nPlease select what you would like to do for this trip")
+    print("1. Create new expense")
+    print("2. Edit expense")
+    print("3. Remove expense")
+    print("4. Generate vacation report")
     selection = input("Enter choice (1, 2, 3, 4): ")
 
     if selection == '1':
@@ -102,6 +93,9 @@ def edit_trip_expenses(trips, connection, cursor, exchange_proxy):
     else:
         print("invalid entry")
 
+    cursor.execute("SELECT * FROM expenses WHERE trip_name = %s", (trips[0][7],))
+    return cursor.fetchall()
+
 
 
 def add_expense(trips, connection, cursor, exchange_proxy):
@@ -111,7 +105,7 @@ def add_expense(trips, connection, cursor, exchange_proxy):
     trip_name = trips[0][7]
     home_currency = trips[0][5]
     trip_currency = trips[0][6]
-    budget = trips[0][8]
+    budget = float(trips[0][8])
 
     # get expense details
     print("\nLet's add an expense")
@@ -135,6 +129,9 @@ def add_expense(trips, connection, cursor, exchange_proxy):
     connection.commit()
     print(f"Added {new_expense['category']} expense to {trip_name}")
     budget_alerts(trips, amount_converted, home_currency)
+
+    cursor.execute("SELECT * FROM expenses WHERE trip_name = %s", (trip_name,))
+    return cursor.fetchall()
 
 
 def expense_factory(category, amount, trip_currency):
@@ -180,7 +177,7 @@ def edit_expense(trips, connection, cursor, exchange_proxy):
     home_currency = trips[0][5]
     trip_currency = trips[0][6]
     
-    print(f"\nShowing expenses for {trip_name}" + "-"*55)
+    print(f"\nShowing expenses for {trip_name}\n" + "-"*55)
     for i, expense in enumerate(trips):
         expense_id = expense[0]
         category = expense[1]
@@ -188,7 +185,7 @@ def edit_expense(trips, connection, cursor, exchange_proxy):
         amount = expense[3]
         print(f"ID: {expense_id}, Category: {category}, Amount: {amount}{trip_currency}, Dated: {date}")
     
-    choice = int(input("Enter ID # of expense you would like to edit"))
+    choice = int(input("Enter ID # of expense you would like to edit: "))
     amount = float(input(f"Enter new expense amount (in {trip_currency}): " ))
     category = input("Enter category for spending (food, stay, transport, event, other): ").lower()
 
@@ -216,7 +213,7 @@ def delete_expense(trips, connection, cursor):
 
     trip_name = trips[0][7]
     
-    print(f"\nShowing expenses for {trip_name}" + "-"*55)
+    print(f"\nShowing expenses for {trip_name}\n" + "-"*55)
     for i, expense in enumerate(trips):
         expense_id = expense[0]
         category = expense[1]
@@ -225,7 +222,7 @@ def delete_expense(trips, connection, cursor):
         trip_currency = expense[7]
         print(f"ID: {expense_id}, Category: {category}, Amount: {amount}{trip_currency}, Dated: {date}")
     
-    choice = int(input("Enter ID # of expense you would like to delete"))
+    choice = int(input("Enter ID # of expense you would like to delete: "))
 
     cursor.execute("DELETE FROM expenses WHERE expense_id = %s", (choice,))
     connection.commit()
@@ -233,42 +230,55 @@ def delete_expense(trips, connection, cursor):
 
 
 
-
 def generate_report(trips):
     """Generate vacation expense and budget report"""
 
     trip_name = trips[0][7]
-    budget = trips[0][8]
-    home_currency = [0][5]
-    trip_currency = [0][6]
+    budget = float(trips[0][8])
+    home_currency = trips[0][5]
     
     # add total spent on food, stay, transport, event, other
-    food_cost = 0
-    stay_cost = 0
-    transport_cost = 0
-    event_cost = 0
-    other_cost = 0
-    total_spent = 0
+    food_cost = 0.0
+    stay_cost = 0.0
+    transport_cost = 0.0
+    event_cost = 0.0
+    other_cost = 0.0
+    total_spent = 0.0
 
     for i, expenses in enumerate(trips): # iterate through trips to find total spent and cost per category
-        total_spent += float(expenses[4])
+        amount = float(expenses[4])
+        total_spent += amount
 
         if expenses[1] == "food": # add food costs
-            food_cost += float(expenses[4])
+            food_cost += amount
 
         elif expenses[1] == "stay": # add stay costs
-            stay_cost += float(expenses[4])
+            stay_cost += amount
 
         elif expenses[1] == "transport": # add transport costs
-            transport_cost += float(expenses[4])
+            transport_cost += amount
 
         elif expenses[1] == "event": # add event costs
-            event_cost += float(expenses[4])
+            event_cost += amount
 
         else: # add other costs
-            other_cost += float(expenses[4])
+            other_cost += amount
+
+    remaining = budget-total_spent
+    percent_spent = total_spent/budget*100
     
-    print(f"\n-------------- Trip Report -------------- \nShowing details for {trip_name}")
+    print(f"\n---------------------------- Trip Report ----------------------------\nShowing details for {trip_name}\n" + "-"*69)
+    print(f"Budget: {home_currency}{budget:.2f}")
+    print(f"Total Spent: {home_currency}{total_spent:.2f}")
+    print(f"Remaining: {home_currency}{remaining:.2f}")
+    print(f"% Spent: {percent_spent:.1f}%")
+    print("\nExpenses by category:")
+    print(f"Food: {home_currency}{food_cost:.2f}")
+    print(f"Stay: {home_currency}{stay_cost:.2f}")
+    print(f"Transportation: {home_currency}{transport_cost:.2f}")
+    print(f"Events: {home_currency}{event_cost:.2f}")
+    print(f"Other: {home_currency}{other_cost:.2f}")
+    print("-"*69)
 
 
 
@@ -315,10 +325,10 @@ class currency_conversion:
 def budget_alerts(trips, expense, home_currency):
     """Print budget alerts to user based on budget use - partially follows strategy pattern"""
 
-    budget = trips[0][8]
+    budget = float(trips[0][8])
     target_80 = budget*0.8
     large_spend = budget*0.15
-    total_spent = 0
+    total_spent = 0.0
 
     for i, expenses in enumerate(trips): # iterate through trips to find total spent
         total_spent += float(expenses[4]) 
@@ -326,17 +336,17 @@ def budget_alerts(trips, expense, home_currency):
     remaining = budget-total_spent
 
     if remaining < 0:
-        print(f"ALERT!: Budget of {budget}{home_currency} exceeded")
+        print(f"ALERT!: Budget of {budget:.2f}{home_currency} exceeded")
         remaining = 0
 
     if float(expense) >= large_spend:
-        print(f"ALERT!: Your expense of {expense}{home_currency} exceeds 15% of your total budget")
+        print(f"ALERT!: Your expense of {expense:.2f}{home_currency} exceeds 15% of your total budget")
 
     if total_spent > target_80:
-        print(f"ALERT!: You have exceeded 80% of your budget. Total spend = {total_spent}{home_currency}")
+        print(f"ALERT!: You have exceeded 80% of your budget. Total spend = {total_spent:.2f}{home_currency}")
 
     if remaining <= 100:
-        print(f"ALERT!: You have less than 100{home_currency} remaining. Amount remaining = {remaining}")
+        print(f"ALERT!: You have less than 100{home_currency:.2f} remaining. Amount remaining = {remaining:.2f}")
 
 
 
@@ -347,19 +357,48 @@ def main():
     cursor = DBconnection.cursor()
     exchange_proxy = currency_conversion()
 
+    current_trip = None
+
+    print("Welcome to the Vacation Expense Tracker\n")
+
     while True:
 
-        choice = main_menu()
+        print("\nPlease select which actions you would like to do\n" + "="*55)
+        print("1. Create new trip")
+        print("2. Work on existing trip")
+        
+        if current_trip:
+            print("3. Work on a different trips")
+            print("4. Exit")
+            print(f"\nCurrently working on: {current_trip[0][7]}")
+            selection = input("Enter choice (1, 2, 3, 4): ")
+        else:
+            print("3. Exit")
+            selection = input("Enter choice (1, 2, 3): ")
 
-        if choice == '1':
-            new_trip(DBconnection, cursor, exchange_proxy)
+        if selection == '1':
+            current_trip = new_trip(DBconnection, cursor, exchange_proxy)
 
-        elif choice == '2':
-            trips = find_existing_trips(cursor)
-            edit_trip_expenses(trips, DBconnection, cursor, exchange_proxy)
-        elif choice == '3':
-            print("Exiting program, thank you")
-            break
+        elif selection == '2':
+            if current_trip:
+                current_trip = edit_trip_expenses(current_trip, DBconnection, cursor, exchange_proxy)
+            else:
+                trips = find_existing_trips(cursor)
+                current_trip = trips
+                edit_trip_expenses(trips, DBconnection, cursor, exchange_proxy)
+            
+        elif selection == '3':
+            if current_trip:
+                trips = find_existing_trips(cursor)
+                current_trip = trips
+                edit_trip_expenses(trips, DBconnection, cursor, exchange_proxy)
+            else:
+                print("Exiting program, thank you")
+                break
+        elif selection == '4':
+            if current_trip:
+                print("Exiting program, thank you")
+                break
         else:
             print("Invalid entry")
 
