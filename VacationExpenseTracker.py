@@ -20,11 +20,20 @@ def connect_db():
     return connection
 
 def main_menu():
-    print("Welcome to the Vacation Expense Tracker \nWould you like to create a new trip or go to existing trip?\n"+"="*55)
+    """Display main menu & get users choice on actions"""
+    print("\nWelcome to the Vacation Expense Tracker\nPlease select which actions you would like to do" + "="*55)
+    print("""1. Create new trip
+          2. Work on existing trip
+          3. Exit""")
+    selection = input("Enter choice (1, 2, 3): ")
+    return selection
+
+def new_trip():
+    """Creating a new trip"""
 
 
 def main():
-    "Main program loop"
+    """Main program loop"""
 
 if __name__ == "__main__":
     main()
