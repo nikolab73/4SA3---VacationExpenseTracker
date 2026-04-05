@@ -47,7 +47,7 @@ def new_trip(connection, cursor):
     # adding expense details
     print("\nThank you! Now let's get started on your first expense")
     amount = float(input(f"Enter expense amount (in {trip_currency}): " ))
-    category = input("Enter category for spending (food, stay, transport, event, other): ")
+    category = input("Enter category for spending (food, stay, transport, event, other): ").lower()
 
     # calculate converted amounts
     if home_currency != trip_currency:
@@ -81,6 +81,7 @@ def find_existing_trips(cursor):
         print(f"Could not find trip {name}")
         return None
     
+
 
 
 def edit_trip_expenses(trips, connection, cursor):
@@ -120,21 +121,26 @@ def add_expense(trips, connection, cursor):
     # get expense details
     print("\nLet's add an expense")
     amount = float(input(f"Enter expense amount (in {trip_currency}): " ))
-    category = input("Enter category for spending (food, stay, transport, event, other): ")
+    category = input("Enter category for spending (food, stay, transport, event, other): ").lower()
+
+    new_expense = expense_factory(category, amount, trip_currency)
 
     # calculate converted amounts
     if home_currency != trip_currency:
-        amount_converted = amount*1.10 # placeholder for conversion
+        amount_converted = new_expense['amount']*1.10 # placeholder for conversion
     else:
-        amount_converted = amount
+        amount_converted = new_expense['amount']
 
     cursor.execute("""INSERT INTO expenses
-                   (trip_name, home_currency, trip_currency, trip_budget, amount, amount_converted, category, expense_date)
+                   (trip_name, home_currency, trip_currency, trip_budget, 
+                    amount, amount_converted, category, expense_date)
                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                   """, (trip_name, home_currency, trip_currency, budget, amount, amount_converted, category, date.today()))
+                   """, (trip_name, home_currency, trip_currency, budget,
+                         new_expense['amount'], amount_converted, 
+                         new_expense['category'], date.today()))
+    
     connection.commit()
-    print(f"Added {category} expense to {trip_name}")
-
+    print(f"Added {new_expense['category']} expense to {trip_name}")
 
 
 
@@ -155,7 +161,7 @@ def edit_expense(trips, connection, cursor):
     
     choice = int(input("Enter ID # of expense you would like to edit"))
     amount = float(input(f"Enter new expense amount (in {trip_currency}): " ))
-    category = input("Enter category for spending (food, stay, transport, event, other): ")
+    category = input("Enter category for spending (food, stay, transport, event, other): ").lower()
 
     # calculate converted amounts
     if home_currency != trip_currency:
@@ -238,7 +244,7 @@ def expense_factory(category, amount, trip_currency):
         }
     
 
-    
+
 
 def main():
     """Main program loop"""
