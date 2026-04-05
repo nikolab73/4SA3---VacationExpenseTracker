@@ -27,3 +27,7 @@ cursor.execute("""
         category VARCHAR(50)
     )
 """)
+
+# main program
+
+print("Welcome to the Vacation Expense Tracker \nWould you like to create a new trip or ")
