@@ -245,10 +245,10 @@ class currency_conversion:
         self.cache = {}
 
     def get_rate(self, trip_currency, home_currency):
-        cache_key = f"{trip_currency}_{home_currency}"
+        cache_key = f"{trip_currency} to {home_currency}" # initialize cache key, conversion from trip (amount entered) to home (converted value also saved)
 
         # check if cached key exists
-        if cache_key in self.cache:
+        if cache_key in self.cache: # check if the string 
             return self.cache[cache_key]
         
         try:
@@ -269,6 +269,7 @@ class currency_conversion:
                 USD_to_trip = data['rates'][trip_currency]
                 rate = USD_to_home/USD_to_trip
 
+            self.cache[cache_key] = rate # save conversion rate in cache, avoid multiple API calls
             return rate
 
         except:
