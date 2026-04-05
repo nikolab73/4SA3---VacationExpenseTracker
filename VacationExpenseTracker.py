@@ -35,9 +35,9 @@ def new_trip(connection, cursor, exchange_proxy):
     #adding trip details
     print("\nBeginning a new trip is exciting!\nLet's start with some details about your trip")
     trip_name = input("Please name your trip, make sure to remember this: ")
-    home_currency = input("Please enter your home currency (e.g., CAD): ").upper()
+    home_currency = input("Please enter your home currency (e.g., CAD, USD, EUR): ").upper()
     trip_currency = input("Please enter the currency used on your trip (e.g., EUR): ").upper()
-    budget = float(input("Please enter your trip budget (in home currency): "))
+    budget = float(input(f"Please enter your trip budget (in home currency {home_currency}): "))
 
     # adding expense details
     print("\nThank you! Now let's get started on your first expense")
@@ -79,7 +79,6 @@ def find_existing_trips(cursor):
     
 
 
-
 def edit_trip_expenses(trips, connection, cursor, exchange_proxy):
     """Here the user can create, edit, delete expenses or generate report"""
 
@@ -101,7 +100,6 @@ def edit_trip_expenses(trips, connection, cursor, exchange_proxy):
         generate_report(trips)
     else:
         print("invalid entry")
-
 
 
 
@@ -129,15 +127,13 @@ def add_expense(trips, connection, cursor, exchange_proxy):
         amount_converted = new_expense['amount']
 
     cursor.execute("""INSERT INTO expenses
-                   (trip_name, home_currency, trip_currency, trip_budget, 
-                    amount, amount_converted, category, expense_date)
+                   (trip_name, home_currency, trip_currency, trip_budget, amount, amount_converted, category, expense_date)
                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                   """, (trip_name, home_currency, trip_currency, budget,
-                         new_expense['amount'], amount_converted, 
-                         new_expense['category'], date.today()))
+                   """, (trip_name, home_currency, trip_currency, budget, new_expense['amount'], amount_converted, new_expense['category'], date.today()))
     
     connection.commit()
     print(f"Added {new_expense['category']} expense to {trip_name}")
+
 
 def expense_factory(category, amount, trip_currency):
     """Expense factory function: creates different types of expenses based on category"""
@@ -203,7 +199,7 @@ def edit_expense(trips, connection, cursor, exchange_proxy):
 
     cursor.execute("""UPDATE expenses 
                    SET amount = %s, amount_converted = %s, category = %s 
-                   WHERE expense_id = %s
+WHERE expense_id = %s
                    """, (amount, amount_converted, category, choice))
     connection.commit()
 
@@ -280,6 +276,21 @@ class currency_conversion:
     
 
 
+def budget_alerts(cursor, trips):
+    """Print budget alerts to user based on budget use - follows strategy pattern"""
+
+    budget = trips[0][8]
+    target_80 = budget*0.8
+    large_spend = budget*0.15
+    total_spent = 0
+
+    for i, expense in enumerate(trips):
+        total_spent += float(expense[4])
+
+    remaining = budget-total_spent
+
+
+
 def main():
     """Main program loop"""
 
@@ -302,7 +313,6 @@ def main():
             break
         else:
             print("Invalid entry")
-
 
 
 if __name__ == "__main__":
