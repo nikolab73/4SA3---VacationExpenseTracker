@@ -201,6 +201,45 @@ def generate_report(trips):
     """Generate vacation expense and budget report"""
 
 
+
+
+def expense_factory(category, amount, trip_currency):
+    """Expense factory function: creates different types of expenses based on category"""
+    
+    if category == "food":
+        return {
+            "category": "food",
+            "amount": amount,
+            "currency": trip_currency,
+        }
+    elif category == "stay":
+        return {
+            "category": "stay",
+            "amount": amount,
+            "currency": trip_currency,
+        }
+    elif category == "transport":
+        return {
+            "category": "transport",
+            "amount": amount,
+            "currency": trip_currency,
+        }
+    elif category == "event":
+        return {
+            "category": "event",
+            "amount": amount,
+            "currency": trip_currency,
+        }
+    else:
+        return {
+            "category": "other",
+            "amount": amount,
+            "currency": trip_currency,
+        }
+    
+
+    
+
 def main():
     """Main program loop"""
 
