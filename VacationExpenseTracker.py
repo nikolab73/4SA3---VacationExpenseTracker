@@ -258,13 +258,22 @@ class currency_conversion:
             data = response.json()
 
             # if home currency is USD - exchange rates API only allows USD conversion for free so we will account for this
-
+            if home_currency == "USD":
+                rate = 1/data['rates'][trip_currency]
             # if trip currency is USD
-
+            elif trip_currency == "USD":
+                rate = data['rates'][home_currency]
             # if neither are USD
+            else:
+                USD_to_home = data['rates'][home_currency]
+                USD_to_trip = data['rates'][trip_currency]
+                rate = USD_to_home/USD_to_trip
+
+            return rate
 
         except:
             print("Error fetching rate")
+            return 1.0
     
 
 
