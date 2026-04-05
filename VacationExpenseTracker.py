@@ -141,6 +141,39 @@ def add_expense(trips, connection, cursor):
 def edit_expense(trips, connection, cursor):
     """Edit existing entry in table"""
 
+    trip_name = trips[0][7]
+    home_currency = trips[0][5]
+    trip_currency = trips[0][6]
+    
+    print(f"\nShowing expenses for {trip_name}" + "-"*55)
+    for i, expense in enumerate(trips):
+        expense_id = expense[0]
+        category = expense[1]
+        date = expense[2]
+        amount = expense[3]
+        print(f"ID: {expense_id}, Category: {category}, Amount: {amount}{trip_currency}, Dated: {date}")
+    
+    choice = int(input("Enter ID # of expense you would like to edit"))
+    amount = float(input(f"Enter new expense amount (in {trip_currency}): " ))
+    category = input("Enter category for spending (food, stay, transport, event, other): ")
+
+    # calculate converted amounts
+    if home_currency != trip_currency:
+        amount_converted = amount*1.10 # placeholder for conversion
+    else:
+        amount_converted = amount
+
+    cursor.execute("""UPDATE expenses 
+                   SET amount = %s, amount_converted = %s, category = %s 
+                   WHERE expense_id = %s
+                   """, (amount, amount_converted, category, choice))
+    connection.commit()
+
+    print(f"\nUpdated expense ID: {choice}")
+
+    
+
+
 def delete_expense(trips, connection, cursor):
     """Remove entry from table"""
 
@@ -155,7 +188,7 @@ def delete_expense(trips, connection, cursor):
         trip_currency = expense[7]
         print(f"ID: {expense_id}, Category: {category}, Amount: {amount}{trip_currency}, Dated: {date}")
     
-    choice = input("Enter ID # of expense you would like to delete")
+    choice = int(input("Enter ID # of expense you would like to delete"))
 
     cursor.execute("DELETE FROM expenses WHERE expense_id = %s", (expense_id))
     connection.commit()
